@@ -4,8 +4,9 @@ Created on Sun Nov  7 10:18:02 2021
 
 @author: Henrique
 """
-from math import * 
+import math
 import sympy
+import random
 
 class Ataque:
     def __init__(self, N,e):
@@ -33,7 +34,7 @@ class Ataque:
         if N % 2 == 0:
             return (2, int(N/2))
         else:
-            x = floor(sqrt(N)) # trocar para sympy?
+            x = math.floor(math.sqrt(N)) # trocar para sympy?
             if N % x == 0:
                 return (x,int(N/x))
             else:
@@ -73,6 +74,23 @@ class Ataque:
             k , d = next(frac)
         print('Falhamos!')
         
+    def pollard_p_menos_1(self, tentativas = 1, B = 100):
+        N = self.N
+        k = int(sympy.lcm((range(1,B+1))))#isso deve tá lento
+        if tentativas == 'oo':
+            while True:
+                a = random.randint(2, N)
+                a = pow(a,k,N)
+                f = math.gcd(a-1,N)
+                if f != 1 and f !=N:
+                    return (f, N//f)
 
+        for _ in range(tentativas):
+            a = random.randint(2, N)
+            a = pow(a,k,N)
+            f = math.gcd(a-1,N)
+            if f != 1 and f !=N:
+                return (f, N//f)
+        print('falhamos!')
 
         
