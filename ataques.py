@@ -7,6 +7,7 @@ Created on Sun Nov  7 10:18:02 2021
 import math
 import sympy
 import random
+import numpy as np
 
 class Ataque:
     def __init__(self, N,e):
@@ -76,7 +77,7 @@ class Ataque:
         
     def pollard_p_menos_1(self, tentativas = 1, B = 100):
         N = self.N
-        k = int(sympy.lcm((range(1,B+1))))#isso deve tá lento
+        k = int(np.lcm.reduce(range(1,B+1)))
         if tentativas == 'oo':
             while True:
                 a = random.randint(2, N)
@@ -92,5 +93,66 @@ class Ataque:
             if f != 1 and f !=N:
                 return (f, N//f)
         print('falhamos!')
+        
+    def ECM(self, tentativas = 1, B = 100):
+        def soma_E(P : tuple, Q: tuple, a: int, b:int, N: int):
+            if P == 'O':
+                return Q 
+            if Q == 'O':
+                return P
+            
+            if P == Q:
+                u = (3*P[0]**2 + a) % N
+                v = (2*P[1]) % N
+            else:
+                u = (Q[1] - P[1]) % N
+                v = (Q[0] - P[0]) % N
+                
+            if v == 0:
+                return 'O'
+            
+            try:
+                inv_v = sympy.mod_inverse(v, N)
+            except ValueError:
+                return math.gcd(N, v)
+            
+            lam = u*inv_v
+            x = (lam**2 - P[0] - Q[0]) % N
+            y = (lam*(P[0] - x) - P[1]) % N
+            return (x,y)
+            
+        
+        N = self.N
+        k = np.lcm.reduce(range(1,B+1))
+        binario_k = bin(k)[2:]
+        numero_de_somas = len(binario_k)
+        for _ in range(tentativas):
+            a = random.randint(2, N)
+            x = random.randint(2, N)
+            y = random.randint(2, N)
+            b = y**2 - x**2 - a*x
+            P = (x,y)
+            
+            Q = P
+            if binario_k[-1] == '0':
+                KP = 'O'
+            else:
+                KP = P
+            #print(KP)
+            if math.gcd(4*a**3 + 27*b**2, N) == 1 :
+                for i in range(numero_de_somas-1):
+                    Q = soma_E(Q, Q, a, b, N)
+                    #print(i,Q)
+                    if type(Q) == int:
+                        return (N//Q, Q)
+                    if binario_k[-i-2] == '1':
+                        KP = soma_E(KP, Q, a, b, N)
+                        #print(KP)
+                    if type(KP) == int:
+                        return (N//KP, KP)
+        print('falhamos')
+            
+            
+                
 
         
