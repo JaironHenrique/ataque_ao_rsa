@@ -130,7 +130,7 @@ class Ataque:
             a = random.randint(2, N)
             x = random.randint(2, N)
             y = random.randint(2, N)
-            b = y**2 - x**2 - a*x
+            b = y**2 - x**3 - a*x
             P = (x,y)
             
             Q = P
