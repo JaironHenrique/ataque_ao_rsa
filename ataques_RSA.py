@@ -23,14 +23,14 @@ def lcm_range(B):
 
 
 class Ataque:
-    def __init__(self, p, q, e):
-        self.N = p*q
+    def __init__(self,N, e):
+        self.N = N
         self.e = e
-        if (gcd((p-1)*(q-1), e) != 1):
-            print('e ruim')
+        '''if (gcd((p-1)*(q-1), e) != 1):
+            print('e ruim')'''
 
     def força_bruta(self):
-        ''' Roda rápido se N = 1039, 58484513; e = 7 '''
+        ''' Roda rápido se N = 1039*58484513 = 60.765.409.007; e = 7 '''
         N = self.N
         if N%2 == 0:
             return 2, N//2
@@ -42,7 +42,7 @@ class Ataque:
         return N, 1
 
     def fermat(self):
-        ''' Roda rápido se N = 58484519, 58484513; e = 3'''
+        ''' Roda rápido se N = 58484519*58484513=3420438611754247; e = 3'''
         N = self.N
         if N % 2 == 0:
             return 2, N//2
@@ -58,7 +58,7 @@ class Ataque:
         return N, 1
 
     def wiener(self):
-        '''Roda rápido se N = 98484527, 58484519, e = 3839880022378979'''
+        '''Roda rápido se N = 98484527*58484519 = 5759820190537513, e = 3839880022378979'''
         N = self.N
         e = self.e
         def convergentes(numerador, denominador):
@@ -77,20 +77,23 @@ class Ataque:
                 b = - N + phi - 1
                 delta = b**2 - 4*N
                 sq_delta = isqrt(max(0,delta))
-                if sq_delta**2 == delta:
-                    print(f'k: {k}\nd: {d}\nphi: {phi}')
-                    return (sq_delta - b) // 2, (-sq_delta - b) // 2
+                if sq_delta**2 == delta and (sq_delta - b) % 2 == 0:
+                    r1 = (sq_delta - b) // 2
+                    r2 = (-sq_delta - b) // 2
+                    if r1 != 1 and r2 !=N:
+                        print(f'k: {k}\nd: {d}\nphi: {phi}')
+                        return (sq_delta - b) // 2, (-sq_delta - b) // 2
             k, d = next(frac)
         print('Falhamos!')
 
     def pollard_p_menos_1(self, mudar_B = 500):
+        '''Roda rápido se N = 39916801*33322727=1330136662436327; e = 13 '''
         N = self.N
         B = floor(N**0.22)
         mult = 1.3
         k = lcm_range(B)
-
         for _ in range(mudar_B):
-            for _ in range(3):
+            for _ in range(10):
                 a = random.randint(2, N)
                 a = pow(a,k,N)
                 f = gcd(a-1,N) # b grande: a=1, f=N // b peq, a=?, f=1
@@ -104,7 +107,8 @@ class Ataque:
             k = lcm_range(B)
         print('falhamos!')
 
-    def ECM(self, tentativas=1, B=100):
+    def ECM(self, tentativas=50, B=33):
+        '''Roda rápido se N = 39916801*33322727=1330136662436327; e = 13 '''
         def soma_E(P: tuple, Q: tuple, a: int, b: int, N: int):
             if P == 'O':
                 return Q
@@ -128,46 +132,92 @@ class Ataque:
             return x, y
 
         N = self.N
-        k = lcm_range(B)
-        binario_k = bin(k)[2:]
-        numero_de_somas = len(binario_k)
         for _ in range(tentativas):
-            a = random.randint(2, N)
-            x = random.randint(2, N)
-            y = random.randint(2, N)
-            b = y**2 - x**3 - a*x
+            a = random.randint(1, N)
+            x = random.randint(1, N)
+            y = random.randint(1, N)
+            b = (y**2 - x**3 - a*x) % N
             P = (x, y)
-            Q = P
-            if binario_k[-1] == '0':
-                KP = 'O'
-            else:
-                KP = P
-            # print(KP)
+            BP = P #No final do loop BP = B! P
             if gcd(4 * a ** 3 + 27 * b ** 2, N) == 1:
-                for i in range(numero_de_somas - 1):
-                    Q = soma_E(Q, Q, a, b, N)
-                    # print(i,Q)
-                    if isinstance(Q, int):
-                        return (N // Q, Q)
-                    if binario_k[-i - 2] == '1':
-                        KP = soma_E(KP, Q, a, b, N)
-                        # print(KP)
-                    if isinstance(KP, int):
-                        return (N//KP, KP)
-        print('falhamos')
-
-
-
-x = Ataque(2684093, 367004581, 7)
-#print(x.força_bruta())
-#print(x.fermat())
-#print(x.wiener())
-s = time.perf_counter()
-#(x.fermat())
-#x.wiener()
-(x.pollard_p_menos_1())
-#x.força_bruta()
-e = time.perf_counter()
-print(e-s)
-
-
+                for i in range(2,B+1): #em cada loop vamos obter i! P
+                    Q = BP
+                    binario_i = bin(i)[2:]
+                    numero_de_somas = len(binario_i)
+                    for j in range(numero_de_somas):
+                        if j != 0:
+                            Q = soma_E(Q, Q, a, b, N)
+                            if isinstance(Q, int):
+                                return (N // Q, Q)
+                        if binario_i[-j - 1] == '1':
+                            BP = soma_E(BP, Q, a, b, N)
+                            if isinstance(BP, int):
+                                return (N//BP, BP)
+                        
+            elif gcd(4 * a ** 3 + 27 * b ** 2, N) != 1:
+                return gcd(4 * a ** 3 + 27 * b ** 2, N)
+                
+if __name__ == '__main__':
+    print('Ataques ao RSA v1.0')
+    print('Escolhar um ataque: ')
+    print('[1] Força Bruta')
+    print('[2] Ataque de Fermat')
+    print('[3] Ataque de Wiener')
+    print('[4] Ataque p-1 de Pollar')
+    print('[5] ECM')
+    escolha = 0
+    while escolha not in {1,2,3,4,5}:
+        escolha = int(input('Digite o número: '))
+    
+    print('Chave pública: ')
+    N = int(input('Valor de N: '))
+    e = int(input('Valor de e: '))
+    
+    ataque = Ataque(N,e)
+    
+    if escolha == 1:
+        print('Executando...')
+        t_inicio = time.perf_counter()
+        print(ataque.força_bruta())
+        t_fim = time.perf_counter()
+        print(f'Executado em {t_fim-t_inicio} segundos')
+    elif escolha == 2:
+        print('Executando...')
+        t_inicio = time.perf_counter()
+        print(ataque.fermat())
+        t_fim = time.perf_counter()
+        print(f'Executado em {t_fim-t_inicio} segundos')
+    elif escolha == 3:
+        print('Executando...')
+        t_inicio = time.perf_counter()
+        print(ataque.wiener())
+        t_fim = time.perf_counter()
+        print(f'Executado em {t_fim-t_inicio} segundos')
+    elif escolha == 4:
+        mudar_B = input('Número de tentativas que você está disposto (digte nada e aperte enter se quiser a nossa recomendação): ')
+        print('Executando...')
+        t_inicio = time.perf_counter()
+        if mudar_B == '':
+            print(ataque.pollard_p_menos_1())
+        else:
+            print(ataque.pollard_p_menos_1(mudar_B = int(mudar_B)))
+        t_fim = time.perf_counter()
+        print(f'Executado em {t_fim-t_inicio} segundos')
+    elif escolha ==5:
+        tentativas = input('Número de tentativas que você está disposto (digte nada e aperte enter se quiser a nossa recomendação): ')
+        B = input('Valor de B (digte nada e aperte enter se quiser a nossa recomendação): ')
+        print('Executando...')
+        if B == '' and tentativas == '':
+            t_inicio = time.perf_counter()
+            print(ataque.ECM())
+        elif B == '':
+            t_inicio = time.perf_counter()
+            print(ataque.ECM(tentativas = int(tentativas)))  
+        elif tentativas == '':
+            t_inicio = time.perf_counter()
+            print(ataque.ECM(B = int(B)))
+        else:
+            t_inicio = time.perf_counter()
+            print(ataque.ECM(tentativas = int(tentativas), B = int(B)))   
+        t_fim = time.perf_counter()
+        print(f'Executado em {t_fim-t_inicio} segundos')
